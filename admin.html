@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Admin</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="/public/practical1.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Access Events </a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li><a href="/events2017/index.html">Home</a></li>
+        <li class="active"><a href="/events2017/admin.html">Admin</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<h1>Single page HTML web app to administer events!</h1><br>
+
+<div class="container">
+  <h3 id= "formHeader">Form to add a venue: </h3>
+  <form method="POST" id = "form" action="" onsubmit="return false" >
+    <div class="form-group">
+      <label for="email">Name:</label>
+      <input type="text" class="form-control" id="name" placeholder="Enter Name" name="name">
+    </div>
+    <div class="form-group">
+      <label for="postcode">Postcode:</label>
+      <input type="text" class="form-control" id="postcode" placeholder="Enter Date" name="postcode">
+    </div>
+    <div class="form-group">
+      <label for="town">Town:</label>
+      <input type="text" class="form-control" id="town" placeholder="Enter Town Name" name="town">
+    </div>
+    <div class="form-group">
+      <label for="url">URL:</label>
+      <input type="text" class="form-control" id="url" placeholder="Enter URL" name="url">
+    </div>
+    <div class="form-group">
+      <label for="icon">ICON:</label>
+      <input type="text" class="form-control" id="icon" placeholder="Enter Icon" name="icon">
+    </div>
+    <button id = "add" class="btn btn-default">Add</button>
+
+  </form>
+</div>
+
+<div class="container">
+  <h3 id = "formHeader2">Form to add a event to selected venue: </h3>
+  <form action="" onsubmit="return false" method="POST" id = "form2">
+    <div class="form-group">
+      <label for="event_id">Event ID:</label>
+      <input type="text" class="form-control" id="event_id" placeholder="Enter Event ID" name="event_id">
+    </div>
+    <div class="form-group">
+      <label for="title">Title:</label>
+      <input type="text" class="form-control" id="title" placeholder="Enter Title" name="title">
+    </div>
+    <div class="form-group">
+      <label for="venue_id">Venue ID:</label>
+      <input type="text" class="form-control" id="venue_id" placeholder="Enter Venue ID" name="venue_id">
+    </div>
+    <div class="form-group">
+      <label for="date">Date:</label>
+      <input type="text" class="form-control" id="date" placeholder="Enter Date" name="date">
+    </div>
+    <div class="form-group">
+      <label for="URL">URL:</label>
+      <input type="text" class="form-control" id="url2" placeholder="Enter URL" name="url">
+    </div>
+    <div class="form-group">
+      <label for="blurb">Blurb:</label>
+      <input type="text" class="form-control" id="blurb" placeholder="Enter blurb" name="blurb">
+    </div>
+    <button id = "submit" class="btn btn-default">Add</button>
+  </form>
+</div>
+
+<div class="container">
+  <h3 id ="loginHeader">Login Page! Please enter username and password</h3>
+  <form action="" onsubmit="return false" method="POST" id = "loginForm">
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <input type="text" class="form-control" id="username" placeholder="Enter Username" name="username">
+    </div>
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input type="password" class="form-control" id="password" placeholder="Enter Password" name="password">
+    </div>
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" name="confirmPassword">
+    </div>
+    <button id = "submitLogin" class="btn btn-default">Submit</button>
+  </form>
+</div>
+
+<script>
+// check valid password, username etc
+
+$("#submitLogin").click(function(){
+
+  username = $("#username").val();
+  password = $("#password").val();
+  confirmPassword = $("#confirmPassword").val();
+
+
+  var formData = {
+    username: username,
+    password: password,
+    confirmPassword: confirmPassword
+  }
+
+ $.post("/events2017/auth", formData)
+
+ // print error to screen with an alert
+ // https://stackoverflow.com/questions/9847244/what-are-the-parameters-sent-to-fail-in-jquery
+ .fail(function(jqXHR, textStatus, error){
+    error = jqXHR.responseJSON
+    error = JSON.stringify(error)
+    error = error.replace( /[{}]/g, ' ' );
+    error = error.replace(/['"]+/g, '');
+    alert(error);
+  })
+
+ .done(function(data){
+     auth_token = data.token;
+     $("#loginForm").hide();
+     $("#loginHeader").hide();
+     $("#form").show();
+     $("#formHeader").show();
+     $("#results").show();
+     $("#tableHeader").show();
+     Cookies.set('auth_token', auth_token);
+   });
+});
+</script>
+
+
+
+<br>
+<div class = "container">
+  <h3 id = "tableHeader"> List of venues: </h3><br>
+
+  <div class = "table-responsive">
+    <table class = "table table-bordered table-striped" id="results">
+      <tr>
+        <th>Name</th>
+        <th>Postcode</th>
+        <th>Town</th>
+        <th>URL</th>
+        <th>Icon</th>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<script>
+
+// auth_token
+$(document).ready(function()
+{
+  $("#form2").hide();
+  $("#formHeader2").hide();
+  $("#loginForm").hide();
+  $("#loginHeader").hide();
+
+
+  $.getJSON("/events2017/auth2")
+
+  .fail(function(jqXHR, textStatus, error){
+     error = jqXHR.responseJSON
+     error = JSON.stringify(error)
+     error = error.replace( /[{}]/g, ' ' );
+     error = error.replace(/['"]+/g, '');
+     alert(error);
+     $("#loginForm").show();
+     $("#form").hide();
+     $("#formHeader").hide();
+     $("#results").hide();
+     $("#tableHeader").hide();
+     $("#loginHeader").show();
+
+   })
+
+   .done(function(data){
+      auth_token = data.auth_token;
+      Cookies.set('auth_token', auth_token);
+  });
+});
+</script>
+
+
+
+<script>
+// Adding new venue.
+
+$("#add").click(function(){
+
+
+  $.get("/events2017/auth2")
+
+
+  .fail(function(jqXHR, textStatus, error){
+     error = jqXHR.responseJSON
+     error = JSON.stringify(error)
+     error = error.replace( /[{}]/g, ' ' );
+     error = error.replace(/['"]+/g, '');
+     alert(error);
+   })
+
+
+  .done(function(data){
+    if(data.success == false)
+    {
+      // display error and redirect to index page
+      alert(data.message)
+      window.location.replace("/events2017/index.html");
+      // does this break out completely?
+    }
+  });
+
+  var name = $("#name").val();
+  var postcode = $("#postcode").val();
+  var town = $("#town").val();
+  var url = $("#url").val();
+  var icon = $("#icon").val();
+
+  var formData = {
+    name: name,
+    postcode: postcode,
+    town: town,
+    url: url,
+    icon: icon
+  }
+
+$.post("/events2017/venues/add", formData)
+
+.fail(function(jqXHR, textStatus, error){
+   error = jqXHR.responseJSON
+   error = JSON.stringify(error)
+   error = error.replace( /[{}]/g, ' ' );
+   error = error.replace(/['"]+/g, '');
+   alert(error);
+ })
+
+ .done(function(data){
+
+   var venueData;
+   $("#results td").remove();
+   $.each(data.venues, function(index, value){
+     // refresh venues list
+     venueData += '<tr>';
+     venueData += '<td>' + value.name + '</td>';
+     venueData += '<td>' + value.postcode + '</td>';
+     venueData += '<td>' + value.town + '</td>';
+     venueData += '<td>' + value.url + '</td>';
+     venueData += '<td>' + value.icon + '</td>';
+     venueData += '</tr>';
+   });
+     $('#results').append(venueData);
+     $('#form')[0].reset();
+   });
+});
+</script>
+
+
+
+<script>
+$("#results").on("mouseenter", 'tr', function () {
+  $(this).css('color', 'red');
+});
+$("#results").on("mouseleave", 'tr', function () {
+  $(this).css('color', 'black');
+});
+</script>
+
+
+
+
+
+<script>
+// Click event to get details about that event and venue
+$('#results').on('click', 'tr', function() {
+
+  // gets venue name of the clicked row.
+  var selectedVenue = $(this).find('td:first').html();
+  var location = 1;
+
+  $.getJSON("/events2017/venues",  function(data){
+    length = Object.keys(data.venues).length;
+    selectedVenue = selectedVenue.toString();
+    $.each(data.venues, function(index, value){
+      if(value.name == selectedVenue)
+      {
+        location = index;
+        $("#venue_id").val(location);
+      }
+    });
+});
+
+
+  $("#results").hide();
+  $("#form").hide();
+  $("#formHeader").hide();
+  $("#tableHeader").hide();
+  $("#form2").show();
+  $("#formHeader2").show();
+  $("#formHeader2").append(selectedVenue);
+  $("#back").show();
+
+});
+
+</script>
+
+
+
+
+
+<script>
+// Add events to selected venue...
+$("#submit").click(function(){
+
+  $.get("/events2017/auth2")
+
+  //.fail(function(jqXHR, textStatus, error){
+    // error = jqXHR.responseJSON
+     //error = JSON.stringify(error)
+     //error = error.replace( /[{}]/g, ' ' );
+     //error = error.replace(/['"]+/g, '');
+     //alert(error);
+   //})
+
+  .done(function(data){
+    if(data.success == false)
+    {
+      // display error and redirect to index page
+      alert(data.message)
+      window.location.replace("/events2017/index.html");
+    }
+  });
+
+    event_id = $("#event_id").val();
+    title = $("#title").val();
+    venue_id = $("#venue_id").val();
+    date = $("#date").val();
+    url2 = $("#url2").val();
+    blurb = $("#blurb").val();
+
+
+    var formData = {
+      event_id: event_id,
+      title: title,
+      venue_id: venue_id,
+      date: date,
+      url2: url2,
+      blurb: blurb,
+    }
+
+
+  $.post("/events2017/events/add", formData)
+
+  .fail(function(jqXHR, textStatus, error){
+   error = jqXHR.responseJSON
+   error = JSON.stringify(error)
+   error = error.replace( /[{}]/g, ' ' );
+   error = error.replace(/['"]+/g, '');
+   alert(error);
+ })
+
+  .done(function(data){
+    window.location.replace("/events2017/index.html");
+  });
+
+});
+</script>
+
+
+
+
+<script>
+
+// https://www.youtube.com/watch?v=AOfSuajwY-I
+$(document).ready(function()
+{
+  $.getJSON("/events2017/venues", function(data){
+    var venueData = '';
+    $.each(data.venues, function(index, value){
+      venueData += '<tr>';
+      venueData += '<td>' + value.name + '</td>';
+      venueData += '<td>' + value.postcode + '</td>';
+      venueData += '<td>' + value.town + '</td>';
+      venueData += '<td>' + value.url + '</td>';
+      venueData += '<td>' + value.icon + '</td>';
+      venueData += '</tr>';
+    });
+    $('#results').append(venueData);
+  });
+});
+</script>
+<br>
+
+</body>
+</html>

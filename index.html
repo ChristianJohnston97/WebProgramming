@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Events</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script type="text/javascript" src="http://api.eventful.com/js/api"></script>
+
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="/public/practical1.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Access Events </a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="/events2017/index.html">Home</a></li>
+        <li><a href="/events2017/admin.html">Admin</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+
+<h1>Single page HTML web app to access events!</h1>
+<br>
+
+<div class="container">
+  <h3>  Please insert keyword and/or date. Date in form YYYY/MM/DD:</h3>
+
+  <form action="javascript:void(0);" method="POST" id = "form">
+    <div class="form-group">
+      <label for="keyword">Keyword:</label>
+      <input type="text" class="form-control" id="keyword" onkeyup="myFunction()" placeholder="Enter Keyword" name="keyword">
+    </div>
+    <div class="form-group">
+      <label for="date">Date:</label>
+      <input type="date" class="form-control" id="date" placeholder="Enter Date" name="date">
+    </div>
+    <button type="submit" id = "submit" class="btn btn-default">Submit</button>
+    <button type="submit" id = "clear" class="btn btn-default">Clear Searches</button>
+    <button type="submit" onclick="getEvents()" class="btn btn-default">Get Extra Events</button>
+
+  </form>
+</div>
+
+
+
+<br>
+<div class = "container">
+  <div class = "table-responsive">
+    <table class = " table table-bordered table-striped" id="results">
+      <tr id='clickable-row'>
+        <th> Event Title</th>
+        <th>Date</th>
+        <th>Venue Name</th>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<script>
+// search terms
+$("#submit").click(function(){
+  var keyword = $("#keyword").val();
+  var date = $("#date").val();
+
+  if(keyword == '' && date == '')
+  {
+    var url = "/events2017/events/";
+  }
+  else if(keyword != '' && date == '')
+  {
+    var url = "/events2017/events/search?search=" +  keyword;
+  }
+  else if(keyword == '' && date != '')
+  {
+    var url = "/events2017/events/search?date=" +  date;
+  }
+  else {
+    var url = "/events2017/events/search?search=" +  keyword + "&date=" + date;
+  }
+
+  $.getJSON(url)
+
+  .fail(function(jqXHR, textStatus, error){
+     error = jqXHR.responseJSON
+     error = JSON.stringify(error)
+     error = error.replace( /[{}]/g, ' ' );
+     error = error.replace(/['"]+/g, '');
+     alert(error);
+   })
+
+
+   .done(function(data){
+    // Clear data in rows before displaying new specific data
+    $("#results td").remove();
+
+    var eventData = '';
+    for(var i=0; i<data.events.length; i++){
+    eventData += '<tr>';
+    eventData += '<td>' + data.events[i].title; + '</td>';
+    eventData += '<td>' + data.events[i].date; + '</td>';
+    eventData += '<td>' + data.events[i].venue.name + '</td>';
+    eventData += '</tr>';
+      };
+    $('#results').append(eventData);
+  });
+
+});
+</script>
+
+<script>
+//clear search term
+$("#clear").click(function(){
+  $("#results td").remove();
+  $('#additionalInfo').hide();
+  $('#info').empty();
+  $('#form')[0].reset();
+  $.getJSON("/events2017/events", function(data){
+    var eventData = '';
+    $.each(data.events, function(index, value){
+      eventData += "<tr id='clickable-row'>";
+      eventData += '<td>' + value.title + '</td>';
+      eventData += '<td>' + value.date + '</td>';
+      eventData += '<td>' + value.venue.name + '</td>';
+      eventData += '</tr>';
+    });
+    $('#results').append(eventData);
+  });
+});
+</script>
+
+
+
+<script>
+$(document).ready(function()
+{
+  $.getJSON("/events2017/events", function(data){
+    var eventData = '';
+    $.each(data.events, function(index, value){
+      eventData += "<tr id='clickable-row'>";
+      eventData += '<td>' + value.title + '</td>';
+      eventData += '<td>' + value.date + '</td>';
+      eventData += '<td>' + value.venue.name + '</td>';
+      eventData += '</tr>';
+    });
+    $('#results').append(eventData);
+  });
+});
+</script>
+
+
+<script>
+$("#results").on("mouseenter", 'tr', function () {
+  $(this).css('color', 'red');
+});
+$("#results").on("mouseleave", 'tr', function () {
+  $(this).css('color', 'black');
+});
+$('#results').css( 'cursor', 'pointer' );
+</script>
+
+
+<h3 id = "additionalInfo"> </h3>
+
+<div class = "container" id = "info">
+</div>
+
+
+<script>
+// Click event to get details about that event and venue
+$('#results').on('click', 'tr', function() {
+
+  $('#additionalInfo').show();
+
+
+  // gets event title of the clicked row.
+  var eventTitle = $(this).find('td:first').html();
+
+  var eventDate = $(this).find('td:nth-child(2)').html();
+
+
+  var url = "/events2017/events/search?search=" + eventTitle + "&date=" + eventDate;
+
+$.getJSON(url, function(data){
+    var title = data.events[0].title;
+    var event_id = data.events[0].event_id;
+    var blurb = data.events[0].blurb;
+    var date = data.events[0].date;
+    var url = data.events[0].url;
+    var venueName = data.events[0].venue.name;
+    var venuePostocde = data.events[0].venue.postcode;
+    var venue_id = data.events[0].venue.venue_id;
+
+    $('#additionalInfo').empty();
+    $('#additionalInfo').append("Full details of specific event and venue:");
+
+    $('#info').empty();
+    $('#info').append("Event Title = " + title + "<br />");
+    $('#info').append("Event Blurb = " + blurb + "<br />");
+    $('#info').append("Event Date = " + date + "<br />");
+    $('#info').append("Event URL = " + url + "<br />");
+    $('#info').append("Venue Name = " + venueName + "<br />");
+    $('#info').append("Venue Postcode = " + venuePostocde + "<br />");
+  });
+});
+</script>
+
+
+
+<script>
+//searching with keywords
+//https://www.w3schools.com/howto/howto_js_filter_table.asp
+function myFunction() {
+  var input, filter, table, tr, td, i;
+  input = document.getElementById("keyword");
+  filter = input.value.toUpperCase();
+  table = document.getElementById("results");
+  tr = table.getElementsByTagName("tr");
+  for (i = 0; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[0];
+    if (td) {
+      if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }
+  }
+}
+</script>
+
+
+
+
+<script>
+// Existing web service
+// eventful API
+// focus is hip hop events
+// Only include events from the UK
+
+function getEvents()
+{
+  window.alert("Please wait while content from external events web service is loaded...");
+
+  var oArgs = {
+
+            app_key:"Fn4WnVZ7PgNppmHf",
+
+            q: "hiphop",
+
+            where: "United Kingdom",
+
+            page_size: 10,
+          };
+
+          EVDB.API.call("/events/search", oArgs, function(oData) {
+
+            var hipHopData = '';
+
+            for (var i=0; i<9; i++){
+              hipHopData += "<tr id='clickable-row'>";
+              hipHopData += '<td>' + oData.events.event[i].title + '</td>';
+              date = oData.events.event[i].start_time;
+              date = date.substring(0,10);
+              hipHopData += '<td>' + date + '</td>';
+              hipHopData += '<td>' + oData.events.event[i].venue_name + '</td>';
+              hipHopData += "</tr>";
+
+              };
+            $('#results').append(hipHopData);
+          });
+        }
+</script>
+
+
+</body>
+</html>
